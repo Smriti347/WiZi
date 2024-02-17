@@ -1,15 +1,22 @@
-import { useState } from 'react'
-import './App.css'
+// Importing necessary modules and styles for our chat application
+import { useState } from 'react';
+import './App.css';
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 import { MainContainer, ChatContainer, MessageList, Message, MessageInput, TypingIndicator } from '@chatscope/chat-ui-kit-react';
 
-const API_KEY = "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";
-// "Explain things like you would to a 10 year old learning how to code."
-const systemMessage = { //  Explain things like you're talking to a software professional with 5 years of experience.
-  "role": "system", "content": "Act as a friend , reply them and if needed give explanation like you're talking to a person who is suffering from anxiety, depression , study pressure, domestic violence or any other thing like that and you are here to help them. Motivate them make them feel loved, use good and cute words to make them feel special. Add emojis to make it more friendly and creative."
-}
+// API Key for accessing the ChatGPT API
+const API_KEY = "#####";
 
+// System message defines the behavior and responses of our chatbot
+const systemMessage = {
+  "role": "system",
+  // "content": "Act as a friend, reply to them, and if needed provide explanations as if you're talking to someone facing challenges like anxiety, depression, or study pressure. Offer motivation, love, and support using friendly and encouraging words, along with emojis for a more welcoming atmosphere and try to make sure that the conversation is only around health and well bing anything that is not related to mental health you will reply them with sorry and no matter whatever anyone ask you you will only say sorry to thing that is not in your scope . "
+  "content": "Here you are a friendly consultant, and you will reply only to personal problems that people face in life. You will not reply to anything that is not related to mental health. You can be as friendly as you want during advice, but only say sorry for anything that is not mental health-related."
+};
+
+// Function to handle the main functionality of our chat application
 function App() {
+  // State variables to manage messages and typing indicator
   const [messages, setMessages] = useState([
     {
       message: "Hello, I'm WiZi! Ask me anything!",
@@ -19,52 +26,47 @@ function App() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
 
+  // Function to handle sending a message
   const handleSend = async (message) => {
+    // Constructing a new message object
     const newMessage = {
       message,
       direction: 'outgoing',
       sender: "user"
     };
 
+    // Adding the new message to the existing list of messages
     const newMessages = [...messages, newMessage];
     
+    // Updating the messages state
     setMessages(newMessages);
 
-    // Initial system message to determine ChatGPT functionality
-    // How it responds, how it talks, etc.
+    // Indicating that the bot is typing
     setIsTyping(true);
+
+    // Processing the message using ChatGPT
     await processMessageToChatGPT(newMessages);
   };
 
-  async function processMessageToChatGPT(chatMessages) { // messages is an array of messages
-    // Format messages for chatGPT API
-    // API is expecting objects in format of { role: "user" or "assistant", "content": "message here"}
-    // So we need to reformat
-
+  // Function to process user messages using ChatGPT
+  async function processMessageToChatGPT(chatMessages) {
+    // Formatting messages for the ChatGPT API
     let apiMessages = chatMessages.map((messageObject) => {
-      let role = "";
-  if (messageObject.sender === "WiZi") {
-        role = "assistant";
-      } else {
-        role = "user";
-      }
-      return { role: role, content: messageObject.message}
+      let role = (messageObject.sender === "WiZi") ? "assistant" : "user";
+      return { role: role, content: messageObject.message };
     });
 
-
-    // Get the request body set up with the model we plan to use
-    // and the messages which we formatted above. We add a system message in the front to'
-    // determine how we want chatGPT to act. 
+    // Constructing the request body for the ChatGPT API
     const apiRequestBody = {
       "model": "gpt-3.5-turbo",
       "messages": [
-        systemMessage,  // The system message DEFINES the logic of our chatGPT
+        systemMessage,  // The system message defines the logic of our chatbot
         ...apiMessages // The messages from our chat with ChatGPT
       ]
     }
 
-    await fetch("https://api.openai.com/v1/chat/completions", 
-    {
+    // Sending the request to the ChatGPT API
+    await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": "Bearer " + API_KEY,
@@ -74,18 +76,19 @@ function App() {
     }).then((data) => {
       return data.json();
     }).then((data) => {
-      console.log(data);
+      // Handling the response from the ChatGPT API
       setMessages([...chatMessages, {
         message: data.choices[0].message.content,
         sender: "WiZi"
       }]);
-      setIsTyping(false);
+      setIsTyping(false); // No longer typing
     });
   }
 
+  // Rendering the chat application UI
   return (
     <div className="App">
-      <div style={{ position:"relative", height: "800px", width: "700px"  }}>
+      <div  style={{ position: "relative", height: "500px", width: "700px",  }}>
         <MainContainer>
           <ChatContainer>       
             <MessageList 
@@ -93,7 +96,6 @@ function App() {
               typingIndicator={isTyping ? <TypingIndicator content="WiZi is typing" /> : null}
             >
               {messages.map((message, i) => {
-                console.log(message)
                 return <Message key={i} model={message} />
               })}
             </MessageList>
@@ -105,6 +107,5 @@ function App() {
   )
 }
 
-export default App
-
+export default App;
 
